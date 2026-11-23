@@ -503,6 +503,7 @@ function M.open()
     vim.wo[w].wrap = false
     vim.wo[w].cursorline = true
     vim.wo[w].signcolumn = "no"
+    vim.wo[w].fillchars = "diff: ,eob: "
   end
 
   setup_keymaps()
