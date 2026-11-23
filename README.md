@@ -38,7 +38,7 @@ VSCode-style Source Control floating UI for Neovim — zero dependencies, pure L
 | Graph | `l` / `h` | Expand / collapse commit |
 | Graph | `o` | Open file in editor (or commit snapshot if missing on disk) |
 | Commit | `c` / `1` | Focus commit message box |
-| Commit | `<C-s>` / `<C-CR>` | Submit commit |
+| Commit | `C` / `<C-s>` | Submit commit (`Shift+c` in Normal mode, or `Ctrl+s` anytime) |
 | Sidebar | `p` / `P` / `f` | Pull / Push / Fetch |
 | Sidebar | `b` | Branch switcher / create branch |
 | Sidebar | `z` | Stash menu (save / pop / apply / drop) |

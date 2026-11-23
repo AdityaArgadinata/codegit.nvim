@@ -20,6 +20,7 @@ M.defaults = {
     unstage_all = "U",
     discard = "x",
     commit_focus = "c",
+    commit_submit_normal = "C",
     commit_submit = "<C-s>",
     commit_submit_alt = "<C-CR>",
     open_file = "o",

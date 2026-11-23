@@ -217,6 +217,9 @@ local function setup_keymaps()
   map(state.bufs.diff_right, "n", "<C-h>", function() focus_panel("diff_left") end)
 
   -- Commit box bindings
+  map(state.bufs.commit, "n", km.commit_submit_normal, actions.submit_commit)
+  map(state.bufs.changes, "n", km.commit_submit_normal, actions.submit_commit)
+  map(state.bufs.graph, "n", km.commit_submit_normal, actions.submit_commit)
   for _, mode in ipairs({ "n", "i" }) do
     map(state.bufs.commit, mode, km.commit_submit, actions.submit_commit)
     map(state.bufs.commit, mode, km.commit_submit_alt, actions.submit_commit)
@@ -424,7 +427,7 @@ function M.open()
     border = border,
     title = " [1] Commit ",
     title_pos = "left",
-    footer = " <C-s> commit ",
+    footer = " [C] / <C-s> commit ",
     footer_pos = "right",
     zindex = 50,
   })

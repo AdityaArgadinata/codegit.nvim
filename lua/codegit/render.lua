@@ -76,7 +76,7 @@ function M.update_commit_title()
   vim.api.nvim_win_set_config(win, {
     title = title,
     title_pos = "left",
-    footer = " <C-s> commit ",
+    footer = " [C] / <C-s> commit ",
     footer_pos = "right",
   })
 end

@@ -506,7 +506,7 @@ function M.show_help()
     "",
     "  Commit Box",
     "    c / 1        Focus commit message box",
-    "    <C-s>/<C-CR> Submit commit",
+    "    C / <C-s>    Submit commit (C in Normal mode)",
     "",
     "  Global (any panel)",
     "    1 - 5        Jump to panel [1]..[5]",
