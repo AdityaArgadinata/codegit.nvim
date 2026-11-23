@@ -238,10 +238,14 @@ local function setup_keymaps()
   end)
   map(cbuf, "n", "<CR>", function()
     local entry = actions.current_changes_entry()
-    if entry and entry.kind == "section" then
+    if not entry then
+      return
+    end
+    if entry.kind == "section" then
       actions.toggle_stage()
-    else
-      actions.open_file(M.close)
+    elseif entry.kind == "change_file" then
+      render.render_diff_for_entry(entry)
+      focus_panel("diff_right")
     end
   end)
 

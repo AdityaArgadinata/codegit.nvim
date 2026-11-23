@@ -31,10 +31,11 @@ VSCode-style Source Control floating UI for Neovim — zero dependencies, pure L
 | Context | Key | Action |
 | --- | --- | --- |
 | Changes | `<Tab>` | Preview diff on the right (keeps focus) |
+| Changes | `<CR>` | Focus diff panel (or collapse section) |
 | Changes | `s` / `<Space>` | Toggle stage/unstage (or collapse section) |
 | Changes | `S` / `U` | Stage all / Unstage all |
 | Changes | `x` | Discard file changes (with confirmation) |
-| Changes | `o` / `<CR>` | Open file in editor |
+| Changes | `o` | Open file in editor |
 | Graph | `<Tab>` | Expand commit or preview file diff (keeps focus) |
 | Graph | `<CR>` / `<Space>` | Expand/collapse commit or focus diff on a commit file |
 | Graph | `l` / `h` | Expand / collapse commit |
