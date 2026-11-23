@@ -2,6 +2,8 @@
 
 VSCode-style Source Control floating UI for Neovim — zero dependencies, pure Lua, built for Neovim 0.10+.
 
+![codegit.nvim](assets/screenshot.png)
+
 ## Layout
 
 - **Left sidebar**
