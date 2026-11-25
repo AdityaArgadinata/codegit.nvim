@@ -10,10 +10,10 @@ local M = {}
 local function compute_layout()
   local opts = config.options
   local editor_w = vim.o.columns
-  local editor_h = vim.o.lines - vim.o.cmdheight - 1
+  local editor_h = math.max(16, vim.o.lines - vim.o.cmdheight)
 
-  local total_w = math.max(76, math.floor(editor_w * opts.width_ratio))
-  local total_h = math.max(20, math.floor(editor_h * opts.height_ratio))
+  local total_w = math.min(editor_w, math.max(76, math.floor(editor_w * opts.width_ratio)))
+  local total_h = math.min(editor_h, math.max(20, math.floor(editor_h * opts.height_ratio)))
   local start_col = math.max(0, math.floor((editor_w - total_w) / 2))
   local start_row = math.max(0, math.floor((editor_h - total_h) / 2))
 

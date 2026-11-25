@@ -2,9 +2,9 @@ local M = {}
 
 M.defaults = {
   border = "rounded",
-  width_ratio = 0.92,
-  height_ratio = 0.88,
-  sidebar_ratio = 0.28,
+  width_ratio = 1.0,
+  height_ratio = 1.0,
+  sidebar_ratio = 0.25,
   sidebar_min_width = 32,
   sidebar_max_width = 46,
   commit_height = 3,
