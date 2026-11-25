@@ -23,10 +23,12 @@ local function compute_layout()
     left_outer_w = math.max(24, math.floor(total_w * 0.35))
   end
 
-  local gap = 1
+  local gap = 0
+  local minimap_outer_w = 4
   local right_outer_w = total_w - left_outer_w - gap
-  local diff_l_outer_w = math.floor(right_outer_w / 2)
-  local diff_r_outer_w = right_outer_w - diff_l_outer_w
+  local diff_area_w = math.max(24, right_outer_w - minimap_outer_w)
+  local diff_l_outer_w = math.floor(diff_area_w / 2)
+  local diff_r_outer_w = diff_area_w - diff_l_outer_w
 
   local commit_outer_h = opts.commit_height + 2
   local rem_h = math.max(10, total_h - commit_outer_h)
@@ -64,6 +66,12 @@ local function compute_layout()
       row = start_row,
       col = right_col + diff_l_outer_w,
       width = math.max(10, diff_r_outer_w - 2),
+      height = math.max(5, total_h - 2),
+    },
+    minimap = {
+      row = start_row,
+      col = right_col + diff_l_outer_w + diff_r_outer_w,
+      width = minimap_outer_w - 2,
       height = math.max(5, total_h - 2),
     },
   }
@@ -139,6 +147,9 @@ function M.close()
     if w and vim.api.nvim_win_is_valid(w) then
       pcall(vim.api.nvim_win_close, w, true)
     end
+  end
+  if state.wins.minimap and vim.api.nvim_win_is_valid(state.wins.minimap) then
+    pcall(vim.api.nvim_win_close, state.wins.minimap, true)
   end
 
   if state.prev_scrollopt ~= nil then
@@ -341,6 +352,7 @@ local function setup_autocmds()
           end)
         end
       end)
+      render.render_minimap()
       syncing_scroll = false
     end,
   })
@@ -353,7 +365,7 @@ local function setup_autocmds()
         return
       end
       local layout = compute_layout()
-      for _, key in ipairs(panel_order) do
+      for _, key in ipairs({ "commit", "changes", "graph", "diff_left", "diff_right", "minimap" }) do
         local win = state.wins[key]
         local geo = layout[key]
         if win and vim.api.nvim_win_is_valid(win) and geo then
@@ -366,6 +378,7 @@ local function setup_autocmds()
           })
         end
       end
+      render.render_minimap()
     end,
   })
 
@@ -417,6 +430,7 @@ function M.open()
   state.bufs.graph = create_scratch_buf("graph", false)
   state.bufs.diff_left = create_scratch_buf("diff-left", false)
   state.bufs.diff_right = create_scratch_buf("diff-right", false)
+  state.bufs.minimap = create_scratch_buf("minimap", false)
 
   vim.bo[state.bufs.commit].filetype = "gitcommit"
 
@@ -494,18 +508,33 @@ function M.open()
     zindex = 50,
   })
 
+  state.wins.minimap = vim.api.nvim_open_win(state.bufs.minimap, false, {
+    relative = "editor",
+    row = layout.minimap.row,
+    col = layout.minimap.col,
+    width = layout.minimap.width,
+    height = layout.minimap.height,
+    style = "minimal",
+    border = border,
+    focusable = false,
+    zindex = 50,
+  })
+
   -- Window options
   vim.wo[state.wins.commit].wrap = true
   vim.wo[state.wins.changes].cursorline = true
   vim.wo[state.wins.changes].wrap = false
   vim.wo[state.wins.graph].cursorline = true
   vim.wo[state.wins.graph].wrap = false
+  vim.wo[state.wins.minimap].wrap = false
+  vim.wo[state.wins.minimap].fillchars = "eob: "
 
   for _, key in ipairs({ "diff_left", "diff_right" }) do
     local w = state.wins[key]
     vim.wo[w].number = true
     vim.wo[w].wrap = false
     vim.wo[w].cursorline = true
+    vim.wo[w].cursorlineopt = "number"
     vim.wo[w].signcolumn = "no"
     vim.wo[w].fillchars = "diff: ,eob: "
   end

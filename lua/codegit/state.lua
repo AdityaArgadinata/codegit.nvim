@@ -19,8 +19,10 @@ function M.reset()
   M.changes_lines = {}
   M.graph_lines = {}
 
-  -- Current diff key to avoid redundant re-renders
+  -- Current diff key & minimap data
   M.current_diff_key = nil
+  M.diff_hunks = {}
+  M.diff_total_lines = 1
 
   -- Window & buffer handles
   M.wins = {
@@ -29,6 +31,7 @@ function M.reset()
     graph = nil,
     diff_left = nil,
     diff_right = nil,
+    minimap = nil,
   }
   M.bufs = {
     commit = nil,
@@ -36,6 +39,7 @@ function M.reset()
     graph = nil,
     diff_left = nil,
     diff_right = nil,
+    minimap = nil,
   }
   M.augroup = nil
   M.ns = vim.api.nvim_create_namespace("codegit")

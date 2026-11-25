@@ -19,6 +19,7 @@ function M.setup_highlights()
     CodeGitAuthor = "Comment",
     CodeGitRef = "DiagnosticInfo",
     CodeGitHint = "Comment",
+    CodeGitScrollThumb = "FloatBorder",
   }
   for group, target in pairs(links) do
     vim.api.nvim_set_hl(0, group, { link = target, default = true })
@@ -358,11 +359,124 @@ local function find_first_diff_line(left_lines, right_lines)
   return 1
 end
 
+---@param left_lines string[]
+---@param right_lines string[]
+---@return table[] hunks
+local function compute_diff_hunks(left_lines, right_lines)
+  local a = #left_lines > 0 and (table.concat(left_lines, "\n") .. "\n") or ""
+  local b = #right_lines > 0 and (table.concat(right_lines, "\n") .. "\n") or ""
+  local ok, indices = pcall(vim.diff, a, b, { result_type = "indices" })
+  if not ok or type(indices) ~= "table" then
+    return {}
+  end
+
+  local hunks = {}
+  for _, h in ipairs(indices) do
+    local count_a, start_b, count_b = h[2], h[3], h[4]
+    if count_a == 0 and count_b > 0 then
+      table.insert(hunks, { kind = "add", start_line = start_b, end_line = start_b + count_b - 1 })
+    elseif count_a > 0 and count_b == 0 then
+      local line = math.max(1, start_b)
+      table.insert(hunks, { kind = "delete", start_line = line, end_line = line })
+    else
+      table.insert(hunks, {
+        kind = "change",
+        start_line = math.max(1, start_b),
+        end_line = math.max(1, start_b + math.max(1, count_b) - 1),
+      })
+    end
+  end
+  return hunks
+end
+
+function M.render_minimap()
+  local mwin = state.wins.minimap
+  local mbuf = state.bufs.minimap
+  local rwin = state.wins.diff_right
+  if not mwin or not vim.api.nvim_win_is_valid(mwin) or not mbuf or not vim.api.nvim_buf_is_valid(mbuf) then
+    return
+  end
+
+  local height = vim.api.nvim_win_get_height(mwin)
+  if height <= 0 then
+    return
+  end
+
+  local total = math.max(1, state.diff_total_lines or 1)
+  local top_line, bot_line = 1, total
+  if rwin and vim.api.nvim_win_is_valid(rwin) then
+    vim.api.nvim_win_call(rwin, function()
+      top_line = vim.fn.line("w0")
+      bot_line = vim.fn.line("w$")
+    end)
+  end
+
+  local thumb_start = math.max(1, math.floor(((top_line - 1) / total) * height) + 1)
+  local thumb_end = math.min(height, math.max(thumb_start, math.ceil((bot_line / total) * height)))
+
+  -- Map diff hunks onto minimap rows (1..height)
+  local row_hunk = {}
+  local priority = { add = 1, delete = 2, change = 3 }
+  for _, h in ipairs(state.diff_hunks or {}) do
+    local r1 = math.max(1, math.min(height, math.floor(((h.start_line - 1) / total) * height) + 1))
+    local r2 = math.max(r1, math.min(height, math.ceil((h.end_line / total) * height)))
+    for r = r1, r2 do
+      local prev = row_hunk[r]
+      if not prev or priority[h.kind] > priority[prev] then
+        row_hunk[r] = h.kind
+      end
+    end
+  end
+
+  local lines = {}
+  local extmarks = {}
+  local bar = "┃"
+  local marker = "█"
+
+  for r = 1, height do
+    local in_thumb = (r >= thumb_start and r <= thumb_end)
+    local kind = row_hunk[r]
+    local col1 = in_thumb and bar or " "
+    local col2 = kind and marker or " "
+    lines[r] = col1 .. col2
+
+    if in_thumb then
+      table.insert(extmarks, {
+        line = r - 1,
+        col = 0,
+        end_col = #col1,
+        hl = "CodeGitScrollThumb",
+      })
+    end
+    if kind then
+      local hl = kind == "add" and "CodeGitAdded" or (kind == "delete" and "CodeGitDeleted" or "CodeGitModified")
+      table.insert(extmarks, {
+        line = r - 1,
+        col = #col1,
+        end_col = #col1 + #col2,
+        hl = hl,
+      })
+    end
+  end
+
+  set_buf_lines(mbuf, lines)
+  vim.api.nvim_buf_clear_namespace(mbuf, state.ns, 0, -1)
+  for _, em in ipairs(extmarks) do
+    vim.api.nvim_buf_set_extmark(mbuf, state.ns, em.line, em.col, {
+      end_col = em.end_col,
+      hl_group = em.hl,
+    })
+  end
+end
+
 function M.clear_diff(message)
   state.current_diff_key = nil
+  state.diff_hunks = {}
+  state.diff_total_lines = 1
   local msg = message and { "", "  " .. message } or { "" }
   set_diff_pane(state.wins.diff_left, state.bufs.diff_left, msg, "", "[4] Original")
   set_diff_pane(state.wins.diff_right, state.bufs.diff_right, msg, "", "[5] Modified")
+  M.render_minimap()
 end
 
 ---@param entry table|nil
@@ -470,6 +584,10 @@ function M.render_diff_for_entry(entry)
   vim.api.nvim_win_call(wl, function()
     pcall(vim.cmd, "syncbind")
   end)
+
+  state.diff_hunks = compute_diff_hunks(left_lines, right_lines)
+  state.diff_total_lines = math.max(1, #right_lines, #left_lines)
+  M.render_minimap()
 end
 
 return M
